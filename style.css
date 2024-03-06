@@ -1,0 +1,22 @@
+.board span {
+    height: 78px;
+    width: 78px;
+    background-repeat: no-repeat;
+}
+
+.board > div {
+    display: flex;
+}
+
+.black {
+    background-image: url("image/black.jpg");
+}
+.white {
+    background-image: url("image/white.jpg");
+}
+.emptyBlack {
+    background-image: url("image/emptyBlack.jpg");
+}
+.emptyWhite {
+    background-image: url("image/emptyWhite.jpg");
+}
