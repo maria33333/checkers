@@ -20,3 +20,7 @@
 .emptyWhite {
     background-image: url("image/emptyWhite.jpg");
 }
+.selected {
+    background-color: white;
+    opacity: 0.8;
+}
