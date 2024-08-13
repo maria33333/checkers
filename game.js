@@ -1,28 +1,30 @@
 document.addEventListener("DOMContentLoaded", function () {
-    var board = [
-        [0,"@",0,"@",0,"@",0,"@"],
-        ["@",0,"@",0,"@",0,"@",0],
-        [0,"@",0,"@",0,"@",0,"@"],
-        [1,0,1,0,1,0,1,0],
-        [0,1,0,1,0,1,0,1],
-        ["*",0,"*",0,"*",0,"*",0],
-        [0,"*",0,"*",0,"*",0,"*"],
-        ["*",0,"*",0,"*",0,"*",0],
-    ];
     // var board = [
-    //     [0,1,0,1,0,1,0,1],
-    //     [1,0,"@",0,"*",0,1,0],
-    //     [0,1,0,1,0,1,0,1],
+    //     [0,"@",0,"@",0,"@",0,"@"],
+    //     ["@",0,"@",0,"@",0,"@",0],
+    //     [0,"@",0,"@",0,"@",0,"@"],
     //     [1,0,1,0,1,0,1,0],
     //     [0,1,0,1,0,1,0,1],
     //     ["*",0,"*",0,"*",0,"*",0],
     //     [0,"*",0,"*",0,"*",0,"*"],
     //     ["*",0,"*",0,"*",0,"*",0],
     // ];
+    var board = [
+        [0,1,0,1,0,1,0,1],
+        [1,0,"@",0,"*",0,1,0],
+        [0,1,0,1,0,1,0,1],
+        [1,0,1,0,1,0,1,0],
+        [0,1,0,1,0,1,0,1],
+        [1,0,1,0,1,0,1,0],
+        [0,1,0,"@",0,1,0,1],
+        [1,0,1,0,1,0,1,0],
+    ];
     const emptyWhiteClass = "emptyWhite";
     const emptyBlackClass = "emptyBlack";
     const blackClass = "black";
     const whiteClass = "white";
+    const whiteDClass = "whiteD";
+    const blackDClass = "blackD";
 
     var spanElements = document.querySelectorAll('span');
     var currentRow = -1;
@@ -36,7 +38,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // var checkRowPosition = 0;
     // var beatCheck = 0;
     var canBeat = false;
-    var oppositeColor;
     var allowedRowAndCol = [];
     // var takeChecker = false;
     spanElements.forEach(function(span, index) {
@@ -52,15 +53,15 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (this.classList.contains(emptyWhiteClass)) {
-                //console.log(emptyWhiteClass);
                 return;
             }
-            var position = getPosition(this.dataset.index);
+            // var position = getPosition(this.dataset.index);
+            var [newPositionRow, newPositionCol] = getPosition(this.dataset.index);
             canBeat = checkForBeating();
             if (canBeat && !this.classList.contains(emptyBlackClass)) {
                 var isAllowed = false;
                 for (var i = 0; i < allowedRowAndCol.length; i++) {
-                    if (allowedRowAndCol[i][0] === position[0] && allowedRowAndCol[i][1] === position[1]) {
+                    if (allowedRowAndCol[i][0] === newPositionRow && allowedRowAndCol[i][1] === newPositionCol) {
                         isAllowed = true;
                         break;
                     }
@@ -71,43 +72,80 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (this.classList.contains(emptyBlackClass)) {
-                var [emptyRow, emptyCol] = getPosition(this.dataset.index); // рядок і стовпець порожньої клітинки
                 var selected = currentRow >= 0 && currentCol >= 0; // чи була вибрана яка-небудь фігура на дошці
                 var sel = document.querySelector(".selected"); // рядок вказує на вибрану фігуру
 
-                if (selected && isBeatingMove(currentRow, currentCol, emptyRow, emptyCol)) {
-                // if (selected && Math.abs(currentCol - emptyCol) == 2 && Math.abs(currentRow - emptyRow) == 2) {
-                    var centerRow = Math.floor((currentRow + emptyRow) / 2);//Обчислення середньго рядка між поточним і порожнім рядком
-                    var centerCol = Math.floor((currentCol + emptyCol) / 2);//Обчислення середньго стовпця між поточним и порожнім стовпцем
+                // хід з побиттям
+                if (selected && isBeatingMove(currentRow, currentCol, newPositionRow, newPositionCol)) {
+                    var centerRow = Math.floor((currentRow + newPositionRow) / 2);//Обчислення середньго рядка між поточним і порожнім рядком
+                    var centerCol = Math.floor((currentCol + newPositionCol) / 2);//Обчислення середньго стовпця між поточним и порожнім стовпцем
                     var centerCell = board[centerRow][centerCol];//Отримання значення клітинки яка по середині
 
                     if (centerCell === boardBlack || centerCell === boardWhite) {
-                        console.log("шашка стоїть на діагоналі посередині");
-
                         beatCheckers(centerRow, centerCol);
                         if (sel.classList.contains(whiteClass)) {
-                            makeMove(whiteClass, this, sel, emptyRow, emptyCol);
+                            makeMove(whiteClass, this, sel, newPositionRow, newPositionCol);
                         }
                         // Винести у функцію і видалити фігуру яку побили
                         if (sel.classList.contains(blackClass)) {
-                            makeMove(blackClass, this, sel, emptyRow, emptyCol);
+                            makeMove(blackClass, this, sel, newPositionRow, newPositionCol);
                         }
-                    } else {
-                        console.log("шашка не стоїть на діагоналі посередині");
+                        canBeat = checkForBeating();
+                        if (canBeat) {
+                            var isAllowed = false;
+                            for (var i = 0; i < allowedRowAndCol.length; i++) {
+                                if (allowedRowAndCol[i][0] === newPositionRow && allowedRowAndCol[i][1] === newPositionCol) {
+                                    isAllowed = true;
+                                    this.classList.add('selected');
+                                    currentRow = newPositionRow;
+                                    currentCol = newPositionCol;
+                                    break;
+                                }
+                            }
+                            if (!isAllowed) {
+                                isWhiteTurn = !isWhiteTurn;
+                                currentRow = -1;
+                                currentCol = -1;
+                            }
+                        } else {
+                            isWhiteTurn = !isWhiteTurn;
+                            currentRow = -1;
+                            currentCol = -1;
+                        }
                     }
                 }
-                if (selected && !canBeat && Math.abs(currentCol - emptyCol) == 1) {
-                    if (sel.classList.contains(whiteClass) && (currentRow - emptyRow) == 1) {
-                        makeMove(whiteClass, this, sel, emptyRow, emptyCol);
+
+                // простий хід
+                if (selected && !canBeat && Math.abs(currentCol - newPositionCol) == 1 || ( sel && sel.classList.contains(whiteDClass) || sel.classList.contains(blackDClass))) {
+                    if (sel.classList.contains(whiteClass) && (currentRow - newPositionRow) == 1) {
+                        makeMove(whiteClass, this, sel, newPositionRow, newPositionCol);
+                        isWhiteTurn = !isWhiteTurn;
+                        currentRow = -1;
+                        currentCol = -1;
                     }
-                    if (sel.classList.contains(blackClass) && (emptyRow - currentRow) == 1) {
-                        makeMove(blackClass, this, sel, emptyRow, emptyCol);
+                    if (sel.classList.contains(blackClass) && (newPositionRow - currentRow) == 1) {
+                        makeMove(blackClass, this, sel, newPositionRow, newPositionCol);
+                        isWhiteTurn = !isWhiteTurn;
+                        currentRow = -1;
+                        currentCol = -1;
+                    }
+                    if (sel.classList.contains(whiteDClass) && isValidDMove(currentRow, currentCol, newPositionRow, newPositionCol)) {
+                        makeMove(whiteClass, this, sel, newPositionRow, newPositionCol);
+                        isWhiteTurn = !isWhiteTurn;
+                        currentRow = -1;
+                        currentCol = -1;
+                    }
+                    if (sel.classList.contains(blackDClass) && isValidDMove(currentRow, currentCol, newPositionRow, newPositionCol)) {
+                        makeMove(blackDClass, this, sel, newPositionRow, newPositionCol);
+                        isWhiteTurn = !isWhiteTurn;
+                        currentRow = -1;
+                        currentCol = -1;
                     }
                 }
                 return;
             }
 
-            if (this.classList.contains(whiteClass) || this.classList.contains(blackClass)) {
+            if (this.classList.contains(whiteClass) || this.classList.contains(blackClass) || this.classList.contains(whiteDClass) || this.classList.contains(blackDClass)) {
                 var sel = document.querySelector(".selected");
                 if (sel) {
                     sel.classList.remove("selected");
@@ -148,6 +186,14 @@ document.addEventListener("DOMContentLoaded", function () {
         spanToRemove.classList.add(emptyBlackClass);
         board[centerRow][centerCol] = boardEmptyBlack;//видалення шашки, оновлення дошки
     }
+    // б'ємо чорними білу
+    // переставляємо чорну
+    // перевіряємо чи може чорна побить ще раз
+    // якщо не може змінюється чергу і скидаємо currentCol i currentRow
+    // якщо може
+    // - то блокуємо всі інші
+    // - виділямо чорну
+    // - б'ємо білу
     function makeMove(blackOrWhiteClass, selCell, prevCell, emptyRowIndex, emptyColIndex) {
         selCell.classList.remove(emptyBlackClass);
         selCell.classList.add(blackOrWhiteClass);
@@ -159,53 +205,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (blackOrWhiteClass == blackClass) {
             board[emptyRowIndex][emptyColIndex] = boardBlack;
-            isWhiteTurn = true;
-        } else if (blackOrWhiteClass == whiteClass) {
+        } else if (blackOrWhiteClass === whiteClass) {
             board[emptyRowIndex][emptyColIndex] = boardWhite;
-            isWhiteTurn = false;
+        } else if (blackOrWhiteClass === blackDClass) {
+            board[emptyRowIndex][emptyColIndex] = boardBlack;
+        } else if (blackOrWhiteClass === whiteDClass) {
+            board[emptyRowIndex][emptyColIndex] = boardWhite;
         } else {
             console.log("wrong css class");
         }
-
-        currentRow = -1;
-        currentCol = -1;
-
-        checkColPosition = emptyColIndex + 1;
-        checkRowPosition = emptyRowIndex - 1;
-        // var index = checkRowPosition * 8 + checkColPosition;
-        // var spanToCheck = document.querySelector(`span[data-index = '${index}']`);
-        if (blackOrWhiteClass === whiteClass) {
-            oppositeColor = boardBlack;
-        } else {
-            oppositeColor = boardWhite;
+        if (emptyRowIndex == 0 && blackOrWhiteClass === whiteClass) {
+            // selCell.classList.remove(whiteClass);
+            selCell.classList.add(whiteDClass);
+        } else if (emptyRowIndex == 7 && blackOrWhiteClass === blackClass) {
+            selCell.classList.add(blackDClass);
         }
-        // if (spanToCheck.classList.contains(whiteClass)) {
-
-        // } else if (spanToCheck.classList.contains(blackClass)) {
-        //     beatCheck = 1;
-        // }
-        canBeat = false;
-
-        var boundaryCheck = emptyRowIndex != 0 && emptyRowIndex != 7 && emptyColIndex != 0 && emptyColIndex != 7;
-        if (boundaryCheck) {
-            if (board[emptyRowIndex + 1][emptyColIndex + 1] === oppositeColor && board[emptyRowIndex - 1][emptyColIndex - 1] === boardEmptyBlack) {
-                canBeat = true;
-                console.log("test 1");
-            }
-            if (board[emptyRowIndex - 1][emptyColIndex + 1] === oppositeColor && board[emptyRowIndex + 1][emptyColIndex - 1] === boardEmptyBlack) {
-                canBeat = true;
-                console.log("test 2");
-            }
-            if (board[emptyRowIndex + 1][emptyColIndex - 1] === oppositeColor && board[emptyRowIndex - 1][emptyColIndex + 1] === boardEmptyBlack) {
-                canBeat = true;
-                console.log("test 3");
-            }
-            if (board[emptyRowIndex - 1][emptyColIndex - 1] === oppositeColor && board[emptyRowIndex + 1][emptyColIndex + 1] === boardEmptyBlack) {
-                canBeat = true;
-                console.log("test 4");
-            }
-            // console.log(canBeat);
-        }
+    }
+    function canGo(startRow, startCol, endRow, endCol) {
+        return Math.abs(startRow - endRow) === 1 && Math.abs(startCol - endCol) === 1;
     }
 
     function checkForBeating() {
@@ -251,7 +268,22 @@ document.addEventListener("DOMContentLoaded", function () {
             board[midRow][midCol] !== boardEmptyBlack
         );
     }
+
     function isBeatingMove(startRow, startCol, endRow, endCol) {
         return Math.abs(startRow - endRow) === 2 && Math.abs(startCol - endCol) === 2;
+    }
+    function isValidDMove(startRow, startCol, endRow, endCol) {
+        var rowDiff = Math.abs(startRow - endRow);
+        var colDiff = Math.abs(startCol - endCol);
+        if(rowDiff !== colDiff) return false;//рух не по діагоналі
+
+        var rowStep = (endRow - startRow) / rowDiff;
+        var colStep = (endCol- startCol) / colDiff;
+        for (var i = 1; i < rowDiff; i++) {
+            if(board[startRow + i * rowStep][startCol + i * colStep] !== boardEmptyBlack) {
+                return false; // на шляху є перешкода
+            }
+        }
+        return true;
     }
 });
